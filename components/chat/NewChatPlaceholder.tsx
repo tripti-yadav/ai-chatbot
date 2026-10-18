@@ -1,0 +1,71 @@
+"use client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useChats } from "@/hooks/queries/use-chats";
+import { ChatInput } from "./chat-input";
+import { useAuth } from "@/hooks/queries/use-auth";
+import { fileToBase64 } from "@/lib/utils";
+
+export const NewChatPlaceholder = () => {
+  const router = useRouter();
+  const { createChatAsync, isCreatingChat } = useChats();
+  const { user, isLoading: isAuthLoading } = useAuth(); 
+  const [input, setInput] = useState("");
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent, files?: File[]) => {
+    e.preventDefault();
+    const text = input.trim();
+
+    if (!text && (!files || files.length === 0)) return;
+
+    if (!user) {
+      console.warn("Waiting for authorization to complete...");
+      return;
+    }
+
+    try {
+      const newChat = await createChatAsync({});
+
+      if (files && files.length > 0) {
+        const fileParts = await Promise.all(
+          files.map(async (file) => ({
+            type: "file" as const,
+            url: await fileToBase64(file),
+            mediaType: file.type,
+            filename: file.name,
+          })),
+        );
+        sessionStorage.setItem(
+          `pending_files_${newChat.id}`,
+          JSON.stringify(fileParts),
+        );
+      }
+
+      router.push(`/chat/${newChat.id}?message=${encodeURIComponent(text)}`);
+    } catch (error) {
+      console.error("Failed to create chat", error);
+    }
+  };
+
+  const isDisabled = isCreatingChat || isAuthLoading || !user;
+
+  return (
+    <div className="flex flex-col flex-1 w-full overflow-hidden">
+      <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        Start a dialogue with the AI assistant
+      </div>
+      <div className="mx-auto w-full max-w-5xl px-4 py-4">
+        <ChatInput
+          value={input}
+          onChange={handleInputChange}
+          onSend={handleSubmit}
+          disabled={isDisabled}
+        />
+      </div>
+    </div>
+  );
+};
