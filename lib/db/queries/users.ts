@@ -46,21 +46,25 @@ export async function ensureUserExists(userId: string, isAnonymous: boolean, ema
     }
   }
 }
-
 export async function createUser(userId: string, email: string) {
+  const { data: existingUser, error: lookupError } = await supabaseAdmin
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle<Pick<UserResponse, "id">>();
+  if (lookupError) throw lookupError;
+  if (existingUser) {
+    if (existingUser.id === userId) return;
+    throw new Error("This email already belongs to an existing app user. Check the Supabase Auth user and public.users record.");
+  }
   const { error } = await supabaseAdmin.from("users").insert({
     id: userId,
     email,
     is_anonymous: false,
     free_messages_count: 0,
   });
-
-  if (error) {
-    console.error("Error creating user:", error);
-    throw error;
-  }
+  if (error) throw error;
 }
-
 export async function decrementFreeMessagesCount(userId: string) {
   const { error } = await supabaseAdmin.rpc("decrement_free_messages", {
     user_id: userId,
