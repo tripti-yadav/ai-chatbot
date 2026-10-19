@@ -18,14 +18,20 @@ export const authService = {
   },
 
   async signUp(email: string, password: string) {
-    const res = await fetch("/api/auth/sign-up", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) throw new Error("Sign-up failed");
+  const res = await fetch("/api/auth/sign-up", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
 
-    return res.json();
-  },
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(data.error || `Sign-up failed (${res.status})`);
+  }
+
+  return data;
+},
 
   async logout() {
     const res = await fetch("/api/auth/logout", {
