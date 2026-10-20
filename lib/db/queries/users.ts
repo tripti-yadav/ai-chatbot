@@ -55,7 +55,7 @@ export async function createUser(userId: string, email: string) {
   if (lookupError) throw lookupError;
   if (existingUser) {
     if (existingUser.id === userId) return;
-    throw new Error("This email already belongs to an existing app user. Check the Supabase Auth user and public.users record.");
+    throw new Error("This email belongs to a different app user.");
   }
   const { error } = await supabaseAdmin.from("users").insert({
     id: userId,
