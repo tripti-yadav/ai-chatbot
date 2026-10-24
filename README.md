@@ -1,7 +1,8 @@
 # an ai-chatbot
 
 a chatgpt-style app built with next.js, where you can chat with ai, share images and docs, and pick up conversations across tabs. includes anonymous usage limits and a smooth, multimodal chat experience.
-
+## Live Demo
+https://ai-chatbotuse.onrender.com
 
 ### prerequisites
 * Node.js (v18.17+)
